@@ -23,6 +23,9 @@ such as RHEL derivatives and Debian derivatives may work, just not tested.
   "-e mariadb_ignore_offline_nodes=true".
 * `mariadb_root_password`: MariaDB root password.  This is a security-sensitive
   password that should be stored in a vault.
+* `mariadb_buffer_pool_size`: Optional.  Specified in MB. If the node isn't
+  dedicated to MariaDB it may be desirable to set this value as otherwise up
+  to 3/4 of the available memory may be provisioned to the buffer pool.
 * `mariadb_cluster`: Boolean. Whether or not this node is a member of a cluster.
 * `mariadb_external_access`: Boolean. Whether or not to listen for external
   connections.  Ignored if `mariadb_cluster` is true as external connections

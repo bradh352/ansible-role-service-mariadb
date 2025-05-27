@@ -1,4 +1,6 @@
-{% if ansible_memtotal_mb >= 8192 %}
+{% if mariadb_buffer_pool_size is defined %}
+{%   set innodb_buffer_pool_size=mariadb_buffer_pool_size|int|abs %}
+{% elif ansible_memtotal_mb >= 8192 %}
 {%   set innodb_buffer_pool_size=(ansible_memtotal_mb * 0.75)|int|abs %}
 {% elif ansible_memtotal_mb >= 4096 %}
 {%   set innodb_buffer_pool_size=(ansible_memtotal_mb * 0.50)|int|abs %}
