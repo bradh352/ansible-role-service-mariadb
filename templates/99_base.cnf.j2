@@ -23,6 +23,9 @@ log_bin_compress               = ON
 # Expire off bin logs we no longer need for slaves
 expire_logs_days               = 3
 
+character-set-server           = utf8mb4
+collation-server               = utf8mb4_unicode_ci
+
 innodb_adaptive_hash_index_parts = 8
 innodb_buffer_pool_instances   = 16
 innodb_buffer_pool_size        = {{ innodb_buffer_pool_size }}MB
