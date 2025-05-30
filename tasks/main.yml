@@ -30,6 +30,10 @@
     mariadb_config_dir: "{{ '/etc/my.cnf.d/' if ansible_os_family == 'RedHat' else '/etc/mysql/mariadb.conf.d/' }}"
     mariadb_sock: "{{ '/var/lib/mysql/mysql.sock' if ansible_os_family == 'Redhat' else '/run/mysqld/mysqld.sock' }}"
 
+- name: See if MariaDB is already running
+  shell: systemctl is-active mariadb
+  register: mariadb_running
+
 - name: Install configuration
   template:
     src: 99_base.cnf.j2
@@ -37,7 +41,7 @@
     owner: root
     group: root
     mode: 0644
-  notify: "{{ 'mariadb_restart' if not mariadb_bootstrap|default(false) else 'noop' }}"
+  notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 else omit }}"
 
 - name: Install cluster configuration
   template:
@@ -46,7 +50,7 @@
     owner: root
     group: root
     mode: 0644
-  notify: "{{ 'mariadb_restart' if not mariadb_bootstrap|default(false) else 'noop' }}"
+  notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 else omit }}"
 
 - name: Create clustercheck health check script
   template:
