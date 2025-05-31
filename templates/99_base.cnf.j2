@@ -12,20 +12,30 @@
 
 [mysqld]
 bind-address                   = {{ "0.0.0.0" if (mariadb_external_access|default(false) or mariadb_cluster|default(false)) else "localhost" }}
-# move tmpdir due to /tmp being a memory backed tempfs filesystem, mysql uses this for on disk sorting
+# move tmpdir due to /tmp possibly being a memory backed tmpfs filesystem,
+# mysql uses this for on disk sorting
 tmpdir                         = /var/lib/mysql-tmp
-default_storage_engine         = innodb
+syslog
+syslog-facility                = daemon
+
+max_allowed_packet             = 16M
+max_connections                = 512
+
 binlog_format                  = ROW
 binlog_row_event_max_size      = 2M
 binlog_cache_size              = 2M
 binlog_annotate_row_events     = OFF
 log_bin_compress               = ON
+log_bin                        = mariadb-bin
+log_slave_updates
+
 # Expire off bin logs we no longer need for slaves
 expire_logs_days               = 3
 
 character-set-server           = utf8mb4
 collation-server               = utf8mb4_unicode_ci
 
+default_storage_engine         = innodb
 innodb_adaptive_hash_index_parts = 8
 innodb_buffer_pool_instances   = 16
 innodb_buffer_pool_size        = {{ innodb_buffer_pool_size }}MB
@@ -42,11 +52,6 @@ innodb_lock_wait_timeout       = 600
 # Query Cache causes additional locking, reducing parallelization.  More harm than good.
 query_cache_size               = 0
 query_cache_type               = OFF
-
-log_bin                        = mariadb-bin
-log_slave_updates
-max_allowed_packet             = 16M
-max_connections                = 512
 
 key_buffer_size                = 256M
 sort_buffer_size               = 2M
