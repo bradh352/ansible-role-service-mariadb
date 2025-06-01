@@ -78,15 +78,7 @@
     name: mariadb
     state: started
   register: mariadb_started
-
-- name: Wait for sync if joining cluster and not bootstrap
-  ansible.builtin.shell: /usr/local/bin/clustercheck
-  register: result
-  until: result.rc == 0
-  changed_when: false
-  retries: 90
-  delay: 10
-  when: mariadb_cluster|default(false)
+  when: not mariadb_cluster|default(false)
 
 - name: Set root password for MariaDB for localhost
   community.mysql.mysql_user:
@@ -131,3 +123,6 @@
 - name: Ensure Mariadb users needed for the cluster are created
   import_tasks: "cluster-users.yml"
   when: mariadb_cluster|default(false)
+
+- name: Flush handlers
+  meta: flush_handlers

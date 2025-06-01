@@ -99,6 +99,11 @@
       shell: "galera_new_cluster"
       delegate_to: "{{ mariadb_bootstrap_node }}"
 
+    - name: Ensure Mariadb users needed for the cluster are created
+      import_tasks: "cluster-users.yml"
+      delegate_to: "{{ mariadb_bootstrap_node }}"
+      when: mariadb_previously_started_nodes | length == 0
+
     - name: Wait for bootstrap node to be fully online
       shell: "clustercheck"
       register: bootstrap_status
@@ -109,31 +114,11 @@
       delay: 10
       when: mariadb_start_all_nodes|default(true)
 
-    - name: Ensure Mariadb users needed for the cluster are created
-      import_tasks: "cluster-users.yml"
-      delegate_to: "{{ mariadb_bootstrap_node }}"
-      when: mariadb_previously_started_nodes | length == 0
-
 - name: Start all nodes
-  when: mariadb_start_all_nodes|default(true)
   run_once: true
-  block:
-    - name: Start MariaDB service
-      service:
-        name: mariadb
-        state: started
-      delegate_to: "{{ item }}"
-      ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
-      with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
-
-    - name: Wait until MariaDB has joined the cluster
-      shell: "/usr/local/bin/clustercheck"
-      register: node_status
-      delegate_to: "{{ item }}"
-      changed_when: false
-      until: node_status.rc == 0
-      retries: 90
-      delay: 10
-      ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
-      with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
-
+  throttle: 1
+  script: mariadb_start.sh {{ '1' if mariadb_bootstrap_node|default("") | length > 0 else '0' }} 1
+  delegate_to: "{{ item }}"
+  ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+  when: mariadb_start_all_nodes|default(true) and item != mariadb_bootstrap_node|default("")
+  with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
