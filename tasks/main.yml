@@ -74,6 +74,10 @@
   when: mariadb_cluster|default(false)
 
 - name: Ensure MariaDB is started
+  throttle: 1
+  script: mariadb_start.sh 0 {{ '1' if mariadb_clsuter|default(false) else '0' }}
+
+- name: Ensure MariaDB is started
   service:
     name: mariadb
     state: started

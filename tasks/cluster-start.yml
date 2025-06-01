@@ -117,8 +117,8 @@
 - name: Start all nodes
   run_once: true
   throttle: 1
-  script: mariadb_start.sh {{ '1' if mariadb_bootstrap_node|default("") | length > 0 else '0' }} 1
+  script: mariadb_start.sh {{ '1' if (mariadb_bootstrap_node|default("") | length > 0 and item != mariadb_bootstrap_node) else '0' }} 1
   delegate_to: "{{ item }}"
   ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
-  when: mariadb_start_all_nodes|default(true) and item != mariadb_bootstrap_node|default("")
+  when: mariadb_start_all_nodes|default(true)
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
