@@ -75,7 +75,9 @@
 
 - name: Ensure MariaDB is started
   throttle: 1
+  register: mariadb_start
   script: mariadb_start.sh 0 {{ '1' if mariadb_clsuter|default(false) else '0' }}
+  changed_when: true if 'changed' in mariadb_start.stdout else false
 
 - name: Set root password for MariaDB for localhost
   community.mysql.mysql_user:
