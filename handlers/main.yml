@@ -1,4 +1,4 @@
 ---
 - name: mariadb_restart
-include_tasks: "mariadb_restart.yml"
+  include_tasks: "mariadb_restart.yml"
 
