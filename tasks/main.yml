@@ -77,13 +77,6 @@
   throttle: 1
   script: mariadb_start.sh 0 {{ '1' if mariadb_clsuter|default(false) else '0' }}
 
-- name: Ensure MariaDB is started
-  service:
-    name: mariadb
-    state: started
-  register: mariadb_started
-  when: not mariadb_cluster|default(false)
-
 - name: Set root password for MariaDB for localhost
   community.mysql.mysql_user:
     login_user: root
