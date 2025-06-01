@@ -1,6 +1,5 @@
 ---
 - name: mariadb_restart
   throttle: 1
-  service:
-    name: mariadb
-    state: restarted
+  include_tasks: "mariadb_restart.yml"
+
