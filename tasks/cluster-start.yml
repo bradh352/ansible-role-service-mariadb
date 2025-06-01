@@ -3,7 +3,6 @@
 #   mariadb_ignore_offline_nodes default false
 #   mariadb_start_all_nodes default true
 
-
 - name: Fixup ansible password for this playbook if it was changed in the base role
   set_fact:
     ansible_password: "{{ superuser_password }}"
@@ -39,9 +38,7 @@
   run_once: true
   block:
     - name: Ensure mariadb is shut down on all nodes
-      service:
-        name: mariadb
-        state: stopped
+      shell: "systemctl stop mariadb"
       delegate_to: "{{ item }}"
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"

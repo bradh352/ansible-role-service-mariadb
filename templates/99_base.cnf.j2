@@ -15,8 +15,6 @@ bind-address                   = {{ "0.0.0.0" if (mariadb_external_access|defaul
 # move tmpdir due to /tmp possibly being a memory backed tmpfs filesystem,
 # mysql uses this for on disk sorting
 tmpdir                         = /var/lib/mysql-tmp
-syslog
-syslog-facility                = daemon
 
 max_allowed_packet             = 16M
 max_connections                = 512
@@ -37,9 +35,7 @@ collation-server               = utf8mb4_unicode_ci
 
 default_storage_engine         = innodb
 innodb_adaptive_hash_index_parts = 8
-innodb_buffer_pool_instances   = 16
 innodb_buffer_pool_size        = {{ innodb_buffer_pool_size }}MB
-innodb_log_checksums           = ON
 innodb_file_per_table          = 1
 innodb_flush_method            = O_DIRECT
 innodb_flush_neighbors         = 0

@@ -14,5 +14,5 @@ wsrep_sst_auth = {{ mariadb_sst_user }}:{{ mariadb_sst_password }}
 
 {% if mariadb_cluster_singlewriter|default(false) %}
 # Optimize for single writer
-wsrep_provider_options = "gcs.fc_limit = 256; gcs.fc_factor = 0.99; gcs.fc_master_slave = YES"
+wsrep_provider_options = "gcs.fc_limit = 256; gcs.fc_factor = 0.99; gcs.fc_single_primary = YES"
 {% endif %}
