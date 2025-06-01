@@ -24,7 +24,7 @@ if [ "$CLUSTERWAIT" = "1" ] ; then
   start=`date +%s`
   sleep ${DELAY}
   while ! /usr/local/bin/clustercheck > /dev/null ; do
-    if ! systemctl is-active mariadb > /dev/null ; then
+    if ! systemctl is-active mariadb > /dev/null 2>&1 ; then
       echo "MariaDB unexpectedly quit"
       exit 1
     fi
