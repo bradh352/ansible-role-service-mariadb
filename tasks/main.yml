@@ -76,7 +76,7 @@
     src: clustercheck.j2
     dest: /usr/local/bin/clustercheck
     owner: root
-    mode: 755
+    mode: 0755
   when: mariadb_cluster|default(false)
 
 - name: Enable MariaDB
