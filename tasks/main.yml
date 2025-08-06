@@ -36,6 +36,16 @@
   failed_when: false
   changed_when: false
 
+- name: See if this is configuring a new cluster member
+  ansible.builtin.stat:
+    path: "{{ mariadb_config_dir }}/99_cluster.cnf"
+  register: cluster_config
+  when: mariadb_cluster|default(false)
+
+- name: Set fact if new cluster
+  set_fact:
+    mariadb_new_cluster_node: "{{ false if cluster_config.stat.exists|default(true) else true }}"
+
 - name: Install configuration
   template:
     src: 99_base.cnf.j2
@@ -43,7 +53,7 @@
     owner: root
     group: root
     mode: 0644
-  notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 else omit }}"
+  notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 and not mariadb_new_cluster_node else omit }}"
 
 - name: Install cluster configuration
   template:
@@ -52,7 +62,14 @@
     owner: root
     group: root
     mode: 0644
-  notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 else omit }}"
+  when: mariadb_cluster|default(false)
+  notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 and not mariadb_new_cluster_node else omit }}"
+
+- name: Make sure new cluster nodes are not already running
+  service:
+    name: mariadb
+    state: stopped
+  when: mariadb_new_cluster_node
 
 - name: Create clustercheck health check script
   template:
