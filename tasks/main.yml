@@ -46,6 +46,14 @@
   set_fact:
     mariadb_new_cluster_node: "{{ false if cluster_config.stat.exists|default(true) else true }}"
 
+- name: Install client configuration
+  template:
+    src: 99_client.cnf.j2
+    dest: "{{ mariadb_config_dir }}/99_client.cnf"
+    owner: root
+    group: root
+    mode: 0644
+
 - name: Install configuration
   template:
     src: 99_base.cnf.j2
