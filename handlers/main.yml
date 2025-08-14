@@ -1,4 +1,4 @@
 ---
 - name: mariadb_restart
   script: mariadb_start.sh 1 {{ "1" if mariadb_cluster|default(false) else "0" }}
-  throttle: "{{ 1 if mariadb_cluster|default(false) else omit }}"
+  throttle: 1
