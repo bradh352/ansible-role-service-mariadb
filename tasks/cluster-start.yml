@@ -19,6 +19,7 @@
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
   run_once: true
   ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+  ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
   failed_when: false
   changed_when: false
 
@@ -41,6 +42,7 @@
       shell: "systemctl stop mariadb"
       delegate_to: "{{ item }}"
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+      ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
     - name: Query for nodes that have been started previously
@@ -48,6 +50,7 @@
         path: /var/lib/mysql/grastate.dat
       register: grastate
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+      ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       delegate_to: "{{ item }}"
       with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
@@ -66,6 +69,7 @@
       shell: "stat /var/lib/mysql/grastate.dat > /dev/null 2>&1 && sudo -u mysql /usr/sbin/mariadbd --wsrep-recover 2>&1 | grep 'WSREP: Recovered position' | sed -E 's/.*WSREP: Recovered position:.*:(.*)/\\1/'"
       register: cluster_sequence
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+      ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       failed_when: false
       changed_when: false
       delegate_to: "{{ item }}"
@@ -120,5 +124,6 @@
   script: mariadb_start.sh {{ '1' if (mariadb_bootstrap_node|default("") | length > 0 and item != mariadb_bootstrap_node) else '0' }} 1
   delegate_to: "{{ item }}"
   ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+  ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
   when: mariadb_start_all_nodes|default(true)
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
