@@ -18,8 +18,8 @@
   delegate_to: "{{ item }}"
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
   run_once: true
-  ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
-  ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
+  ignore_unreachable: true
+  ignore_errors: true
   failed_when: false
   changed_when: false
 
