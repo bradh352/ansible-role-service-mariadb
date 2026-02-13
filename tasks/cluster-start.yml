@@ -8,8 +8,9 @@
     ansible_password: "{{ superuser_password }}"
     ansible_become_pass: "{{ superuser_password }}"
   delegate_to: "{{ item }}"
-  delegate_facts: True
-  when: ansible_user == superuser and ((superuser_created is defined and superuser_created.changed) or (superuser_pwchanged is defined and superuser_pwchanged.changed))
+  delegate_facts: true
+  when: ansible_user == superuser and ((superuser_created is defined and superuser_created.changed) or (superuser_pwchanged is defined and
+    superuser_pwchanged.changed))
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
 - name: Query if any servers are online
@@ -66,7 +67,8 @@
           {{- prior_nodes -}}
 
     - name: Evaluate all nodes for the latest sequence number
-      shell: "stat /var/lib/mysql/grastate.dat > /dev/null 2>&1 && sudo -u mysql /usr/sbin/mariadbd --wsrep-recover 2>&1 | grep 'WSREP: Recovered position' | sed -E 's/.*WSREP: Recovered position:.*:(.*)/\\1/'"
+      shell: "stat /var/lib/mysql/grastate.dat > /dev/null 2>&1 && sudo -u mysql /usr/sbin/mariadbd --wsrep-recover 2>&1 | grep 'WSREP: Recovered position' | sed
+        -E 's/.*WSREP: Recovered position:.*:(.*)/\\1/'"
       register: cluster_sequence
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"

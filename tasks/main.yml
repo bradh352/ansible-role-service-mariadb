@@ -1,37 +1,36 @@
 ---
-
 - name: Perform Distribution-specific tasks
-  import_tasks: "rhel.yml"
+  ansible.builtin.import_tasks: "rhel.yml"
   when: ansible_os_family == 'RedHat'
 
 - name: Perform Distribution-specific tasks
-  import_tasks: "debian.yml"
+  ansible.builtin.import_tasks: "debian.yml"
   when: ansible_os_family == 'Debian'
 
 - name: "Gather mariadb hosts"
-  set_fact:
+  ansible.builtin.set_fact:
     mariadb_hosts_json: "{{ lookup('template', 'mariadb_hosts.j2') }}"
   when: mariadb_cluster|default(false)
 
 - name: "Parse mariadb hosts"
-  set_fact:
-    mariadb_hosts: "{{ mariadb_hosts_json|from_yaml }}"
+  ansible.builtin.set_fact:
+    mariadb_hosts: "{{ mariadb_hosts_json | from_yaml }}"
   when: mariadb_cluster|default(false)
 
 - name: "Add known mariadb nodes to /etc/hosts"
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
-    line: "{{ hostvars[item]['mariadb_cluster_ip']}} {{ item|split('.')|first }} {{ item }}"
+    line: "{{ hostvars[item]['mariadb_cluster_ip'] }} {{ item | split('.') | first }} {{ item }}"
   with_items: "{{ mariadb_hosts | reject('search', inventory_hostname | split('.') | first ) }}"
   when: mariadb_cluster|default(false)
 
 - name:
-  set_fact:
+  ansible.builtin.set_fact:
     mariadb_config_dir: "{{ '/etc/my.cnf.d/' if ansible_os_family == 'RedHat' else '/etc/mysql/mariadb.conf.d/' }}"
     mariadb_sock: "{{ '/var/lib/mysql/mysql.sock' if ansible_os_family == 'Redhat' else '/run/mysqld/mysqld.sock' }}"
 
 - name: See if MariaDB is already running
-  shell: systemctl is-active mariadb
+  ansible.builtin.command: systemctl is-active mariadb
   register: mariadb_running
   failed_when: false
   changed_when: false
@@ -43,57 +42,57 @@
   when: mariadb_cluster|default(false)
 
 - name: Set fact if new cluster
-  set_fact:
-    mariadb_new_cluster_node: "{{ false if cluster_config.stat.exists|default(true) else true }}"
+  ansible.builtin.set_fact:
+    mariadb_new_cluster_node: "{{ false if cluster_config.stat.exists | default(true) else true }}"
 
 - name: Install client configuration
-  template:
+  ansible.builtin.template:
     src: 99_client.cnf.j2
     dest: "{{ mariadb_config_dir }}/99_client.cnf"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
 
 - name: Install configuration
-  template:
+  ansible.builtin.template:
     src: 99_base.cnf.j2
     dest: "{{ mariadb_config_dir }}/99_base.cnf"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 and not mariadb_new_cluster_node else omit }}"
 
 - name: Install cluster configuration
-  template:
+  ansible.builtin.template:
     src: 99_cluster.cnf.j2
     dest: "{{ mariadb_config_dir }}/99_cluster.cnf"
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   when: mariadb_cluster|default(false)
   notify: "{{ 'mariadb_restart' if mariadb_running.rc == 0 and not mariadb_new_cluster_node else omit }}"
 
 - name: Make sure new cluster nodes are not already running
-  service:
+  ansible.builtin.service:
     name: mariadb
     state: stopped
   when: mariadb_new_cluster_node
 
 - name: Create clustercheck health check script
-  template:
+  ansible.builtin.template:
     src: clustercheck.j2
     dest: /usr/local/bin/clustercheck
     owner: root
-    mode: 0755
+    mode: "0755"
   when: mariadb_cluster|default(false)
 
 - name: Enable MariaDB
-  service:
+  ansible.builtin.service:
     name: mariadb
     enabled: true
 
 - name: Ensure cluster is online
-  import_tasks: "cluster-start.yml"
+  ansible.builtin.import_tasks: "cluster-start.yml"
   vars:
     mariadb_start_all_nodes: false
   when: mariadb_cluster|default(false)
@@ -101,7 +100,7 @@
 - name: Ensure MariaDB is started
   throttle: 1
   register: mariadb_start
-  script: mariadb_start.sh 0 {{ '1' if mariadb_clsuter|default(false) else '0' }}
+  ansible.builtin.script: mariadb_start.sh 0 {{ '1' if mariadb_clsuter|default(false) else '0' }}
   changed_when: ("changed" in mariadb_start.stdout)
 
 - name: Set root password for MariaDB for localhost
@@ -139,14 +138,14 @@
     login_password: "{{ mariadb_root_password }}"
     check_implicit_admin: true
     column_case_sensitive: false
-    name: ''
-    host_all: yes
+    name: ""
+    host_all: true
     state: absent
   run_once: "{{ mariadb_cluster|default(false) }}"
 
 - name: Ensure Mariadb users needed for the cluster are created
-  import_tasks: "cluster-users.yml"
+  ansible.builtin.import_tasks: "cluster-users.yml"
   when: mariadb_cluster|default(false)
 
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers

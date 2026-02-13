@@ -7,7 +7,7 @@
     state: present
 
 - name: "APT: see if we have a keyring"
-  stat:
+  ansible.builtin.stat:
     path: /etc/apt/trusted.gpg.d/mariadb-keyring.pgp
   register: keyring_exists
 
@@ -20,11 +20,11 @@
   register: keyring
 
 - name: "APT: Import Key"
-  shell: "apt-key add /etc/apt/trusted.gpg.d/mariadb-keyring.pgp"
+  ansible.builtin.command: "apt-key add /etc/apt/trusted.gpg.d/mariadb-keyring.pgp"
   when: keyring.changed
 
 - name: "APT: Install mariadb repository"
-  template:
+  ansible.builtin.template:
     src: mariadb.sources.j2
     dest: /etc/apt/sources.list.d/mariadb.sources
     owner: root
@@ -51,12 +51,12 @@
     state: present
 
 - name: Create mysql tmp directory
-  file:
+  ansible.builtin.file:
     path: /var/lib/mysql-tmp
     state: directory
     owner: mysql
     group: mysql
-    mode: 0750
+    mode: "0750"
 
 - name: "UFW: enable or disable mariadb port depending on if external access is allowed"
   community.general.ufw:
@@ -85,4 +85,3 @@
     port: "4444"
     proto: tcp
   when: mariadb_cluster|default(false)
-

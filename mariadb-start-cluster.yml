@@ -1,5 +1,4 @@
 ---
-
 # To run, pass the group name to the --limit parameter which contains all the MariaDB hosts in the cluster
 # Optional variables:
 #   -e mariadb_ignore_offline_nodes=true
@@ -10,24 +9,21 @@
 #      only start the most up to date node if no other nodes are running.
 
 - hosts: all
-  become: no
-  gather_facts: False
+  become: false
+  gather_facts: false
   tasks:
-  - name: make sure --limit was passed to ansible
-    fail:
-      msg: "you must use -l or --limit"
-    when: ansible_limit is not defined
-    run_once: true
-    delegate_to: localhost
+    - name: make sure --limit was passed to ansible
+      ansible.builtin.fail:
+        msg: "you must use -l or --limit"
+      when: ansible_limit is not defined
+      run_once: true
+      delegate_to: localhost
 
 - hosts: all
   module_defaults:
     ansible.builtin.setup:
       gather_subset: all
       gather_timeout: 10
-  become: yes
+  become: true
   tasks:
-  - import_tasks: "tasks/cluster-start.yml"
-
-
-
+    - ansible.builtin.import_tasks: "tasks/cluster-start.yml"
