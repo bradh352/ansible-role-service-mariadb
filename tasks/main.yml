@@ -100,7 +100,7 @@
 - name: Ensure MariaDB is started
   throttle: 1
   register: mariadb_start
-  ansible.builtin.script: mariadb_start.sh 0 {{ '1' if mariadb_clsuter|default(false) else '0' }}
+  ansible.builtin.script: mariadb_start.sh 0 {{ '1' if mariadb_cluster|default(false) else '0' }}
   changed_when: ("changed" in mariadb_start.stdout)
 
 - name: Set root password for MariaDB for localhost
