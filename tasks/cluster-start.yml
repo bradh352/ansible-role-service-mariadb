@@ -91,29 +91,29 @@
       stat:
         path: /var/lib/mysql/grastate.dat
       register: mariadb_bootstrap_node_grastate
-      delegate_to: "{{ mariadb_bootstrap_node }}"
+      delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
 
     - name: Mark selected node as safe to bootstrap
       lineinfile:
         path: /var/lib/mysql/grastate.dat
         line: "safe_to_bootstrap: 1"
         regexp: "^safe_to_bootstrap.*"
-      delegate_to: "{{ mariadb_bootstrap_node }}"
+      delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
       when: mariadb_bootstrap_node_grastate.stat.exists
 
     - name: Start the bootstrap node
       shell: "galera_new_cluster"
-      delegate_to: "{{ mariadb_bootstrap_node }}"
+      delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
 
     - name: Ensure Mariadb users needed for the cluster are created
       import_tasks: "cluster-users.yml"
-      delegate_to: "{{ mariadb_bootstrap_node }}"
+      delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
       when: mariadb_previously_started_nodes | length == 0
 
     - name: Wait for bootstrap node to be fully online
       shell: "clustercheck"
       register: bootstrap_status
-      delegate_to: "{{ mariadb_bootstrap_node }}"
+      delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
       until: bootstrap_status.rc == 0
       changed_when: false
       retries: 30
