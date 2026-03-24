@@ -3,7 +3,7 @@
 X-Repolib-Name: MariaDB
 Types: deb
 # deb.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
-URIs: https://deb.mariadb.org/{{ mariadb_version|default("11.4") }}/{{ ansible_distribution|lower }}
-Suites: {{ ansible_distribution_release }}
+URIs: https://deb.mariadb.org/{{ mariadb_version|default("11.4") }}/{{ ansible_facts['distribution']|lower }}
+Suites: {{ ansible_facts['distribution_release'] }}
 Components: main main/debug
 Signed-By: /etc/apt/trusted.gpg.d/mariadb-keyring.pgp
