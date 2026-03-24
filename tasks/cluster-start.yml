@@ -4,7 +4,7 @@
 #   mariadb_start_all_nodes default true
 
 - name: Fixup ansible password for this playbook if it was changed in the base role
-  set_fact:
+  ansible.builtin.set_fact:
     ansible_password: "{{ superuser_password }}"
     ansible_become_pass: "{{ superuser_password }}"
   delegate_to: "{{ item }}"
@@ -14,7 +14,7 @@
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
 - name: Query if any servers are online
-  shell: "/usr/local/bin/clustercheck"
+  ansible.builtin.command: "/usr/local/bin/clustercheck"
   register: clusterstatus
   delegate_to: "{{ item }}"
   with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
@@ -25,7 +25,7 @@
   changed_when: false
 
 - name: Record online cluster status
-  set_fact:
+  ansible.builtin.set_fact:
     mariadb_online_nodes: >-
       {%- set online_nodes = [] %}
       {%- for node in clusterstatus.results %}
@@ -40,14 +40,14 @@
   run_once: true
   block:
     - name: Ensure mariadb is shut down on all nodes
-      shell: "systemctl stop mariadb"
+      ansible.builtin.command: "systemctl stop mariadb"
       delegate_to: "{{ item }}"
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
     - name: Query for nodes that have been started previously
-      stat:
+      ansible.builtin.stat:
         path: /var/lib/mysql/grastate.dat
       register: grastate
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
@@ -56,7 +56,7 @@
       with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
     - name: Record previously started nodes
-      set_fact:
+      ansible.builtin.set_fact:
         mariadb_previously_started_nodes: >-
           {%- set prior_nodes = [] %}
           {%- for node in grastate.results %}
@@ -67,8 +67,7 @@
           {{- prior_nodes -}}
 
     - name: Evaluate all nodes for the latest sequence number
-      shell: "stat /var/lib/mysql/grastate.dat > /dev/null 2>&1 && sudo -u mysql /usr/sbin/mariadbd --wsrep-recover 2>&1 | grep 'WSREP: Recovered position' | sed
-        -E 's/.*WSREP: Recovered position:.*:(.*)/\\1/'"
+      ansible.builtin.shell: "stat /var/lib/mysql/grastate.dat > /dev/null 2>&1 && sudo -u mysql /usr/sbin/mariadbd --wsrep-recover 2>&1 | grep 'WSREP: Recovered position' | sed -E 's/.*WSREP: Recovered position:.*:(.*)/\\1/'"
       register: cluster_sequence
       ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
       ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
@@ -78,7 +77,7 @@
       with_items: "{{ groups['mariadb_' + mariadb_cluster_name]|unique|sort }}"
 
     - name: Determine most up-to-date node
-      set_fact:
+      ansible.builtin.set_fact:
         mariadb_bootstrap_node: >-
           {%- set node_sequence = {} %}
           {%- for node in cluster_sequence.results %}
@@ -88,13 +87,13 @@
           {{- best_node[0] -}}
 
     - name: Query for nodes that have been started previously
-      stat:
+      ansible.builtin.stat:
         path: /var/lib/mysql/grastate.dat
       register: mariadb_bootstrap_node_grastate
       delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
 
     - name: Mark selected node as safe to bootstrap
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /var/lib/mysql/grastate.dat
         line: "safe_to_bootstrap: 1"
         regexp: "^safe_to_bootstrap.*"
@@ -102,16 +101,16 @@
       when: mariadb_bootstrap_node_grastate.stat.exists
 
     - name: Start the bootstrap node
-      shell: "galera_new_cluster"
+      ansible.builtin.command: "galera_new_cluster"
       delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
 
     - name: Ensure Mariadb users needed for the cluster are created
-      import_tasks: "cluster-users.yml"
+      ansible.builtin.import_tasks: "cluster-users.yml"
       delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
       when: mariadb_previously_started_nodes | length == 0
 
     - name: Wait for bootstrap node to be fully online
-      shell: "clustercheck"
+      ansible.builtin.command: "clustercheck"
       register: bootstrap_status
       delegate_to: "{{ mariadb_bootstrap_node | default(inventory_hostname)}}"
       until: bootstrap_status.rc == 0
@@ -123,7 +122,7 @@
 - name: Start all nodes
   run_once: true
   throttle: 1
-  script: mariadb_start.sh {{ '1' if (mariadb_bootstrap_node|default("") | length > 0 and item != mariadb_bootstrap_node) else '0' }} 1
+  ansible.builtin.script: mariadb_start.sh {{ '1' if (mariadb_bootstrap_node|default("") | length > 0 and item != mariadb_bootstrap_node) else '0' }} 1
   delegate_to: "{{ item }}"
   ignore_unreachable: "{{ mariadb_ignore_offline_nodes|default(false) }}"
   ignore_errors: "{{ mariadb_ignore_offline_nodes|default(false) }}"
